@@ -36,18 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Three.js Setup
-    const isMobile = () => window.innerWidth < 768;
-
-    const getRenderHeight = () => isMobile() ? Math.floor(window.innerHeight * 0.5) : window.innerHeight;
-    const getRenderWidth = () => window.innerWidth;
-
-    const camera = new THREE.PerspectiveCamera(45, getRenderWidth() / getRenderHeight(), 0.1, 100);
-    camera.clearViewOffset(); // remove any leftover viewOffset from previous fix
+    const scene = new THREE.Scene();
+    
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(5.5, 5, 7.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setClearColor(0x000000, 0); // Transparent to show CSS background
-    renderer.setSize(getRenderWidth(), getRenderHeight());
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     canvasContainer.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -159,10 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('pointermove', (e) => {
         if (isAnimatingMove || isSolvingTriggered) return;
         
-        const rw = getRenderWidth();
-        const rh = getRenderHeight();
-        mouse.x = (e.clientX / rw) * 2 - 1;
-        mouse.y = -(e.clientY / rh) * 2 + 1;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
         const intersects = raycaster.intersectObjects(stickers);
@@ -186,10 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let dy = e.clientY - pointerDownPos.y;
         if (Math.sqrt(dx*dx + dy*dy) > 5) return; // Was a drag (camera orbit)
 
-        const rw = getRenderWidth();
-        const rh = getRenderHeight();
-        mouse.x = (e.clientX / rw) * 2 - 1;
-        mouse.y = -(e.clientY / rh) * 2 + 1;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
         const intersects = raycaster.intersectObjects(stickers);
@@ -459,9 +451,65 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
 
     window.addEventListener('resize', () => {
-        camera.aspect = getRenderWidth() / getRenderHeight();
-        camera.clearViewOffset();
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(getRenderWidth(), getRenderHeight());
+        renderer.setSize(window.innerWidth, window.innerHeight);
     });
+});
+
+// ============ MOBILE DRAWER LOGIC ============
+let mobileDrawerOpen = false;
+
+function toggleMobileDrawer() {
+    mobileDrawerOpen = !mobileDrawerOpen;
+    const drawer = document.getElementById('mobile-drawer');
+    const toggle = document.getElementById('mobile-toggle');
+    const label = document.getElementById('mobile-toggle-label');
+    drawer.classList.toggle('open', mobileDrawerOpen);
+    toggle.classList.toggle('open', mobileDrawerOpen);
+    label.textContent = mobileDrawerOpen ? 'Close' : 'Paint Colors';
+}
+
+// Sync drawer color buttons with main JS activeColor
+document.addEventListener('DOMContentLoaded', () => {
+    const drawerBtns = document.querySelectorAll('.drawer-color-btn');
+    const mainBtns = document.querySelectorAll('.color-btn');
+
+    drawerBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Activate in drawer
+            drawerBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Mirror to the main sidebar buttons (which drive activeColor in main.js)
+            const color = btn.dataset.color;
+            mainBtns.forEach(b => {
+                b.classList.toggle('active', b.dataset.color === color);
+                if (b.dataset.color === color) b.click();
+            });
+
+            // Close drawer after picking so cube is fully visible
+            toggleMobileDrawer();
+        });
+    });
+
+    // Mobile solve button mirrors the desktop one
+    const mobileSolveBtn = document.getElementById('mobile-solve-btn');
+    const desktopSolveBtn = document.getElementById('trigger-solve-btn');
+    mobileSolveBtn.addEventListener('click', () => {
+        desktopSolveBtn.click();
+        toggleMobileDrawer();
+    });
+
+    // Keep mobile progress in sync with desktop progress
+    const observer = new MutationObserver(() => {
+        const count = document.getElementById('painted-count').textContent.split('/')[0];
+        document.getElementById('mobile-painted-count').textContent = count;
+        const fill = document.getElementById('progress-bar-fill').style.width;
+        document.getElementById('mobile-progress-fill').style.width = fill;
+        // Mirror solve button state
+        mobileSolveBtn.classList.toggle('ready', desktopSolveBtn.classList.contains('ready'));
+    });
+    observer.observe(document.getElementById('painted-count'), { childList: true, characterData: true, subtree: true });
+    observer.observe(document.getElementById('progress-bar-fill'), { attributes: true, attributeFilter: ['style'] });
 });

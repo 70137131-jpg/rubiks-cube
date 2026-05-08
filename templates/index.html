@@ -420,102 +420,209 @@
             background: rgba(255,255,255,0.08);
         }
 
+        /* ============ MOBILE: Top Drawer ============ */
         @media (max-width: 768px) {
-            /* Canvas is restricted to top half — cube stays ABOVE the panel */
-            #canvas-container {
-                height: 50vh;
-                width: 100vw;
-                position: fixed;
-                top: 0;
-                left: 0;
-            }
+            /* Sidebar is hidden on mobile */
             #ui-layer {
-                top: auto;
-                left: 16px;
-                right: 16px;
-                bottom: 16px;
-                width: auto;
-                padding: 20px 18px;
-                border-radius: 24px;
-                max-height: 48vh;
-                overflow-y: auto;
+                display: none !important;
             }
-            .header h1 {
-                font-size: 1.5rem;
-                margin-bottom: 6px;
+
+            /* Mobile floating toggle button */
+            #mobile-toggle {
+                display: flex;
             }
-            .header p {
-                font-size: 0.85rem;
-                margin-bottom: 16px;
+
+            /* Mobile drawer slides down from top */
+            #mobile-drawer {
+                display: flex;
             }
-            .progress-container {
-                padding: 14px;
-                margin-bottom: 16px;
-            }
-            .colors-grid {
-                gap: 10px;
-            }
-            .lock-note {
-                margin-top: 16px;
-            }
-            .action-btn {
-                margin-top: 16px;
-                padding: 14px;
-                font-size: 1rem;
-            }
-            #player-panel {
-                bottom: 16px;
-                left: 16px;
-                right: 16px;
-                width: auto;
-                transform: translateX(0) translateY(30px);
-                padding: 18px;
-                border-radius: 24px;
-                flex-direction: column;
-                gap: 14px;
-                box-sizing: border-box;
-            }
-            #player-panel.active {
-                transform: translateX(0) translateY(0);
-            }
-            .player-controls {
-                width: 100%;
-                justify-content: center;
-                padding: 14px 0;
-                border-left: none;
-                border-right: none;
-                border-top: 1px solid rgba(255,255,255,0.08);
-                border-bottom: 1px solid rgba(255,255,255,0.08);
-                gap: 32px;
-                box-sizing: border-box;
-            }
-            .speed-control {
-                width: 100%;
-                justify-content: space-between;
-                box-sizing: border-box;
-            }
-            .toast {
-                top: 16px;
-                right: 16px;
-                left: 16px;
-                text-align: center;
-                transform: translateX(0) translateY(-20px);
-                width: auto;
-            }
-            .toast.show {
-                transform: translateX(0) translateY(0);
-            }
-            .reset-link {
-                top: 16px;
-                right: 16px;
-                padding: 10px 18px;
-                font-size: 0.85rem;
-            }
+        }
+
+        /* Mobile toggle button (paint icon, top-center) */
+        #mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            background: rgba(18, 18, 24, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 100px;
+            padding: 12px 22px;
+            gap: 10px;
+            align-items: center;
+            color: var(--text-main);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            transition: background 0.2s, transform 0.2s;
+            border: none;
+        }
+        #mobile-toggle:active {
+            transform: translateX(-50%) scale(0.96);
+        }
+        #mobile-toggle .toggle-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            transition: background 0.3s;
+        }
+        #mobile-toggle.open .toggle-dot {
+            background: #f87171;
+            box-shadow: 0 0 8px #f87171;
+        }
+
+        /* Mobile drawer panel — slides in from top */
+        #mobile-drawer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 25;
+            background: rgba(12, 12, 18, 0.96);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            border-radius: 0 0 28px 28px;
+            flex-direction: column;
+            padding: 24px 24px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            transform: translateY(-110%);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        #mobile-drawer.open {
+            transform: translateY(0);
+        }
+        #mobile-drawer .drawer-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        #mobile-drawer .drawer-sub {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+        }
+        #mobile-drawer .drawer-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        #mobile-drawer .drawer-progress-bar {
+            flex: 1;
+            height: 5px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        #mobile-drawer .drawer-progress-fill {
+            height: 100%;
+            width: 11%;
+            background: linear-gradient(90deg, var(--accent), #c4b5fd);
+            border-radius: 3px;
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 8px rgba(139,92,246,0.4);
+        }
+        #mobile-drawer .drawer-count {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+        #mobile-drawer .drawer-colors {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        #mobile-drawer .drawer-color-btn {
+            aspect-ratio: 1;
+            border-radius: 14px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+        #mobile-drawer .drawer-color-btn.active {
+            border-color: #fff;
+            transform: scale(1.15);
+        }
+        #mobile-drawer .drawer-solve-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            background: #fff;
+            color: #000;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            transition: all 0.3s;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        #mobile-drawer .drawer-solve-btn.ready {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #mobile-drawer .drawer-solve-btn.ready:active {
+            transform: scale(0.97);
+        }
+        #mobile-drawer .drawer-handle {
+            width: 36px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin: 10px auto 0;
         }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
+
+    <!-- Mobile: floating toggle button -->
+    <button id="mobile-toggle" onclick="toggleMobileDrawer()">
+        <span class="toggle-dot"></span>
+        <span id="mobile-toggle-label">Paint Colors</span>
+    </button>
+
+    <!-- Mobile: slide-down drawer -->
+    <div id="mobile-drawer">
+        <div class="drawer-title">Cube Canvas</div>
+        <div class="drawer-sub">Tap a color, then tap a tile on the cube to paint it.</div>
+        <div class="drawer-progress">
+            <div class="drawer-progress-bar">
+                <div class="drawer-progress-fill" id="mobile-progress-fill"></div>
+            </div>
+            <div class="drawer-count"><span id="mobile-painted-count">6</span>/54</div>
+        </div>
+        <div class="drawer-colors">
+            <div class="drawer-color-btn active" data-color="W" style="background:#FFFFFF"></div>
+            <div class="drawer-color-btn" data-color="Y" style="background:#FFD500"></div>
+            <div class="drawer-color-btn" data-color="G" style="background:#009E60"></div>
+            <div class="drawer-color-btn" data-color="B" style="background:#0051BA"></div>
+            <div class="drawer-color-btn" data-color="O" style="background:#FF5800"></div>
+            <div class="drawer-color-btn" data-color="R" style="background:#C41E3A"></div>
+        </div>
+        <button id="mobile-solve-btn" class="drawer-solve-btn">Solve Cube</button>
+        <div class="drawer-handle"></div>
+    </div>
 
     <div id="ui-layer">
         <div class="header">
