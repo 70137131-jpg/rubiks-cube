@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     if (window.innerWidth < 768) {
         camera.position.set(7, 7, 10);
+        camera.setViewOffset(window.innerWidth, window.innerHeight, 0, window.innerHeight * 0.22, window.innerWidth, window.innerHeight);
     } else {
         camera.position.set(5.5, 5, 7.5);
     }
@@ -456,6 +457,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
+        if (window.innerWidth < 768) {
+            camera.setViewOffset(window.innerWidth, window.innerHeight, 0, window.innerHeight * 0.22, window.innerWidth, window.innerHeight);
+        } else {
+            camera.clearViewOffset();
+        }
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
