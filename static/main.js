@@ -36,19 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Three.js Setup
-    const scene = new THREE.Scene();
-    
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    if (window.innerWidth < 768) {
-        camera.position.set(7, 7, 10);
-        camera.setViewOffset(window.innerWidth, window.innerHeight, 0, window.innerHeight * 0.22, window.innerWidth, window.innerHeight);
-    } else {
-        camera.position.set(5.5, 5, 7.5);
-    }
+    const isMobile = () => window.innerWidth < 768;
+
+    const getRenderHeight = () => isMobile() ? Math.floor(window.innerHeight * 0.5) : window.innerHeight;
+    const getRenderWidth = () => window.innerWidth;
+
+    const camera = new THREE.PerspectiveCamera(45, getRenderWidth() / getRenderHeight(), 0.1, 100);
+    camera.clearViewOffset(); // remove any leftover viewOffset from previous fix
+    camera.position.set(5.5, 5, 7.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setClearColor(0x000000, 0); // Transparent to show CSS background
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(getRenderWidth(), getRenderHeight());
     canvasContainer.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -160,8 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('pointermove', (e) => {
         if (isAnimatingMove || isSolvingTriggered) return;
         
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        const rw = getRenderWidth();
+        const rh = getRenderHeight();
+        mouse.x = (e.clientX / rw) * 2 - 1;
+        mouse.y = -(e.clientY / rh) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
         const intersects = raycaster.intersectObjects(stickers);
@@ -185,8 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let dy = e.clientY - pointerDownPos.y;
         if (Math.sqrt(dx*dx + dy*dy) > 5) return; // Was a drag (camera orbit)
 
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        const rw = getRenderWidth();
+        const rh = getRenderHeight();
+        mouse.x = (e.clientX / rw) * 2 - 1;
+        mouse.y = -(e.clientY / rh) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
         const intersects = raycaster.intersectObjects(stickers);
@@ -456,13 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
 
     window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        if (window.innerWidth < 768) {
-            camera.setViewOffset(window.innerWidth, window.innerHeight, 0, window.innerHeight * 0.22, window.innerWidth, window.innerHeight);
-        } else {
-            camera.clearViewOffset();
-        }
+        camera.aspect = getRenderWidth() / getRenderHeight();
+        camera.clearViewOffset();
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(getRenderWidth(), getRenderHeight());
     });
 });
