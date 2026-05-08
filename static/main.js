@@ -39,7 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const scene = new THREE.Scene();
     
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(5.5, 5, 7.5);
+    if (window.innerWidth < 768) {
+        camera.position.set(7, 7, 10);
+    } else {
+        camera.position.set(5.5, 5, 7.5);
+    }
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setClearColor(0x000000, 0); // Transparent to show CSS background
