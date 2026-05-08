@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubik's Canvas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #070709;
+            --surface: rgba(22, 22, 28, 0.7);
+            --surface-border: rgba(255, 255, 255, 0.05);
+            --text-main: #f3f4f6;
+            --text-muted: #8b8d98;
+            --accent: #8b5cf6;
+            --accent-hover: #a78bfa;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 80vw; height: 80vh;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(139,92,246,0.05) 0%, rgba(0,0,0,0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Sleek Sidebar */
+        #ui-layer {
+            position: absolute;
+            top: 32px;
+            left: 32px;
+            bottom: 32px;
+            width: 340px;
+            background: var(--surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--surface-border);
+            border-radius: 28px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 32px;
+            box-sizing: border-box;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.03em;
+            color: #fff;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0 0 40px 0;
+        }
+
+        .progress-container {
+            background: rgba(0,0,0,0.4);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .progress-count {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .progress-count span {
+            color: var(--text-muted); 
+            font-size: 1rem; 
+            font-weight: 500;
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 11%; /* (6/54)*100 */
+            background: linear-gradient(90deg, var(--accent), #c4b5fd);
+            border-radius: 3px;
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+
+        .palette-section {
+            flex-grow: 1;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .colors-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .color-btn {
+            aspect-ratio: 1;
+            border-radius: 20px;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: none;
+        }
+
+        .color-btn::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 23px;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .color-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 10px rgba(255,255,255,0.2), inset 0 -2px 10px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        .color-btn.active::before {
+            border-color: #fff;
+        }
+
+        .color-btn.active {
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 15px rgba(255,255,255,0.15);
+        }
+
+        .color-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .color-btn.active:hover {
+            transform: scale(1.08);
+        }
+
+        .lock-note {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.25);
+            text-align: center;
+            margin-top: 40px;
+            font-weight: 500;
+        }
+
+        .action-btn {
+            margin-top: 24px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            background: #ffffff;
+            color: #000000;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .action-btn.ready {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .action-btn.ready:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+        }
+        
+        .action-btn.ready:active {
+            transform: translateY(0);
+        }
+
+        /* Elegant Player UI */
+        #player-panel {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            background: rgba(18, 18, 24, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 100px;
+            padding: 14px 28px;
+            z-index: 20;
+            display: none; /* Flex when active */
+            align-items: center;
+            gap: 28px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+            opacity: 0;
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        #player-panel.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .move-display {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            color: #fff;
+            min-width: 140px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding: 0 28px;
+            border-left: 1px solid rgba(255,255,255,0.08);
+            border-right: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .ctrl-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: color 0.2s, transform 0.2s;
+            padding: 8px;
+        }
+
+        .ctrl-btn:hover { color: #fff; transform: translateY(-1px); }
+        .ctrl-btn:active { transform: translateY(1px); }
+        
+        .ctrl-btn.play { 
+            color: var(--accent); 
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .ctrl-btn.play:hover { color: var(--accent-hover); }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .speed-label-text {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        .speed-val { 
+            font-size: 0.9rem; 
+            font-family: 'Space Grotesk', sans-serif; 
+            font-weight: 500;
+            width: 35px;
+            color: #fff;
+        }
+
+        /* Minimalist Toast */
+        .toast {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            background: #e11d48;
+            color: white;
+            padding: 16px 28px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 100;
+            box-shadow: 0 15px 35px rgba(225, 29, 72, 0.25);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(7, 7, 9, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 50;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255,255,255,0.05);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            border-right-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .reset-link {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            z-index: 15;
+            display: none;
+            padding: 12px 24px;
+            border-radius: 100px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+        }
+        .reset-link:hover { 
+            color: #fff; 
+            background: rgba(255,255,255,0.08);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="header">
+            <h1>Cube Canvas</h1>
+            <p>Drag to orbit the space. Tap any structural tile to apply pigment.</p>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-header">
+                <span class="progress-label">Reconstruction</span>
+                <span class="progress-count" id="painted-count">6<span>/54</span></span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+        </div>
+
+        <div class="palette-section">
+            <div class="section-title">Active Pigment</div>
+            <div class="colors-grid">
+                <div class="color-btn active" data-color="W" style="background: #FFFFFF;"></div>
+                <div class="color-btn" data-color="Y" style="background: #FFD500;"></div>
+                <div class="color-btn" data-color="G" style="background: #009E60;"></div>
+                <div class="color-btn" data-color="B" style="background: #0051BA;"></div>
+                <div class="color-btn" data-color="O" style="background: #FF5800;"></div>
+                <div class="color-btn" data-color="R" style="background: #C41E3A;"></div>
+            </div>
+            <div class="lock-note">Core centers are structurally locked.</div>
+            
+            <button id="trigger-solve-btn" class="action-btn">Solve Cube</button>
+        </div>
+    </div>
+
+    <div id="player-panel">
+        <div class="move-display" id="current-move-text">Analyzing</div>
+        
+        <div class="player-controls">
+            <button id="prev-move-btn" class="ctrl-btn">Prev</button>
+            <button id="play-pause-btn" class="ctrl-btn play">Play</button>
+            <button id="next-move-btn" class="ctrl-btn">Next</button>
+        </div>
+
+        <div class="speed-control">
+            <span class="speed-label-text">Speed</span>
+            <input type="range" id="speed-slider" min="0.25" max="3" step="0.25" value="1">
+            <span class="speed-val" id="speed-label">1.0x</span>
+        </div>
+    </div>
+
+    <a href="#" class="reset-link" id="reset-btn" onclick="location.reload()">Start Fresh</a>
+
+    <div class="toast" id="toast"></div>
+
+    <div id="loading-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+</html>
