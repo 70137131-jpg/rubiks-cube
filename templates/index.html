@@ -420,25 +420,7 @@
             background: rgba(255,255,255,0.08);
         }
 
-        /* ============ MOBILE: Top Drawer ============ */
-        @media (max-width: 768px) {
-            /* Sidebar is hidden on mobile */
-            #ui-layer {
-                display: none !important;
-            }
-
-            /* Mobile floating toggle button */
-            #mobile-toggle {
-                display: flex;
-            }
-
-            /* Mobile drawer slides down from top */
-            #mobile-drawer {
-                display: flex;
-            }
-        }
-
-        /* Mobile toggle button (paint icon, top-center) */
+        /* ============ MOBILE: Toggle Button (hidden on desktop) ============ */
         #mobile-toggle {
             display: none;
             position: fixed;
@@ -446,10 +428,9 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 30;
-            background: rgba(18, 18, 24, 0.88);
+            background: rgba(18, 18, 24, 0.92);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 100px;
             padding: 12px 22px;
             gap: 10px;
@@ -460,9 +441,9 @@
             font-weight: 600;
             letter-spacing: 0.05em;
             cursor: pointer;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
             transition: background 0.2s, transform 0.2s;
-            border: none;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         #mobile-toggle:active {
             transform: translateX(-50%) scale(0.96);
@@ -480,7 +461,7 @@
             box-shadow: 0 0 8px #f87171;
         }
 
-        /* Mobile drawer panel — slides in from top */
+        /* Mobile drawer panel — hidden on desktop, slides in from top on mobile */
         #mobile-drawer {
             display: none;
             position: fixed;
@@ -590,6 +571,22 @@
             background: rgba(255,255,255,0.15);
             border-radius: 2px;
             margin: 10px auto 0;
+        }
+
+        /* ============ MOBILE BREAKPOINT — override display to show drawer UI ============ */
+        @media (max-width: 768px) {
+            /* Hide desktop sidebar */
+            #ui-layer {
+                display: none !important;
+            }
+            /* Show the floating toggle pill */
+            #mobile-toggle {
+                display: flex !important;
+            }
+            /* Show the drawer panel (starts off-screen via transform) */
+            #mobile-drawer {
+                display: flex !important;
+            }
         }
     </style>
 </head>
