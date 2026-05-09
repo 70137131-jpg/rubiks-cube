@@ -241,6 +241,31 @@
             transform: translateY(0);
         }
 
+        .reset-paint-btn {
+            margin-top: 12px;
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 14px;
+            background: transparent;
+            color: #f87171;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 1px solid rgba(248, 113, 113, 0.25);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .reset-paint-btn:hover {
+            background: rgba(248, 113, 113, 0.1);
+            border-color: rgba(248, 113, 113, 0.5);
+            transform: translateY(-1px);
+        }
+        .reset-paint-btn:active {
+            transform: translateY(0);
+        }
+
         /* Elegant Player UI */
         #player-panel {
             position: absolute;
@@ -573,7 +598,15 @@
             margin: 10px auto 0;
         }
 
-        /* ============ MOBILE BREAKPOINT — override display to show drawer UI ============ */
+        /* Mobile-scoped reset button inside the drawer */
+        #mobile-drawer .reset-paint-btn {
+            margin-top: 10px;
+            padding: 12px 14px;
+            font-size: 0.88rem;
+            border-radius: 12px;
+        }
+
+        /* ============ MOBILE BREAKPOINT ============ */
         @media (max-width: 768px) {
             /* Hide desktop sidebar */
             #ui-layer {
@@ -587,7 +620,91 @@
             #mobile-drawer {
                 display: flex !important;
             }
+
+            /* ---- Solving screen: player panel ---- */
+            #player-panel {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                transform: translateY(100%);
+                border-radius: 28px 28px 0 0;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                padding: 24px 24px 36px;
+                width: auto;
+            }
+            #player-panel.active {
+                transform: translateY(0);
+            }
+
+            .move-display {
+                font-size: 1.5rem;
+                min-width: unset;
+                text-align: center;
+                padding-bottom: 18px;
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+                margin-bottom: 18px;
+            }
+
+            .player-controls {
+                border-left: none;
+                border-right: none;
+                justify-content: center;
+                gap: 0;
+                padding: 0 0 18px 0;
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+                margin-bottom: 18px;
+            }
+
+            .ctrl-btn {
+                flex: 1;
+                padding: 14px 8px;
+                font-size: 1rem;
+                letter-spacing: 0.06em;
+                border-radius: 12px;
+            }
+            .ctrl-btn.play {
+                font-size: 1.1rem;
+            }
+
+            .speed-control {
+                justify-content: space-between;
+                width: 100%;
+                gap: 12px;
+            }
+            input[type="range"] {
+                flex: 1;
+                width: auto;
+            }
+
+            /* Start Fresh: top-center, clear of the player panel */
+            .reset-link {
+                position: fixed;
+                top: 20px;
+                right: auto;
+                left: 50%;
+                bottom: auto;
+                transform: translateX(-50%);
+                white-space: nowrap;
+                z-index: 30;
+                font-size: 0.85rem;
+                padding: 10px 20px;
+            }
+
+            /* Toast: bottom-center on mobile */
+            .toast {
+                top: auto;
+                bottom: 20px;
+                right: auto;
+                left: 50%;
+                transform: translateX(calc(-50% + 20px));
+            }
+            .toast.show {
+                transform: translateX(-50%);
+            }
         }
+
     </style>
 </head>
 <body>
@@ -618,6 +735,7 @@
             <div class="drawer-color-btn" data-color="R" style="background:#C41E3A"></div>
         </div>
         <button id="mobile-solve-btn" class="drawer-solve-btn">Solve Cube</button>
+        <button id="mobile-reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
         <div class="drawer-handle"></div>
     </div>
 
@@ -650,6 +768,7 @@
             <div class="lock-note">Core centers are structurally locked.</div>
             
             <button id="trigger-solve-btn" class="action-btn">Solve Cube</button>
+            <button id="reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
         </div>
     </div>
 

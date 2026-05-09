@@ -128,6 +128,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Reset all painted stickers back to unpainted
+    function resetPainting() {
+        stickers.forEach(sticker => {
+            if (!sticker.userData.isCenter) {
+                sticker.userData.color = null;
+                sticker.material.color.setHex(hexColors['unpainted']);
+                sticker.material.emissive.setHex(0x000000);
+            }
+        });
+
+        // Reset cubeState (keep centers)
+        ['F', 'R', 'B', 'L', 'U', 'D'].forEach(f => {
+            cubeState[f] = Array(9).fill(null);
+            cubeState[f][4] = getCenterColor(f);
+        });
+
+        // Reset color counts (1 each for the locked centers)
+        colorCounts = { 'W': 1, 'Y': 1, 'G': 1, 'B': 1, 'O': 1, 'R': 1 };
+
+        updatePaintedCount();
+    }
+
+    document.getElementById('reset-paint-btn').addEventListener('click', resetPainting);
+
+    // Expose for mobile button
+    window._resetPainting = resetPainting;
+
     function updatePaintedCount() {
         let count = 0;
         for (let f in cubeState) count += cubeState[f].filter(c => c !== null).length;
@@ -261,7 +288,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => uiLayer.style.display = 'none', 500);
                 
                 document.getElementById('reset-btn').style.display = 'block';
-                
+
+                // Hide mobile toggle pill during solving (Start Fresh takes its spot)
+                const mobileToggle = document.getElementById('mobile-toggle');
+                if (mobileToggle) mobileToggle.style.display = 'none';
+
                 playerPanel.style.display = 'flex';
                 // Trigger reflow
                 void playerPanel.offsetWidth;
@@ -498,6 +529,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const desktopSolveBtn = document.getElementById('trigger-solve-btn');
     mobileSolveBtn.addEventListener('click', () => {
         desktopSolveBtn.click();
+        toggleMobileDrawer();
+    });
+
+    // Mobile reset button
+    document.getElementById('mobile-reset-paint-btn').addEventListener('click', () => {
+        if (window._resetPainting) window._resetPainting();
         toggleMobileDrawer();
     });
 
