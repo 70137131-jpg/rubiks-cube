@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rubik's Canvas</title>
+    <link rel="manifest" href="/static/manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cubejs/1.2.2/cube.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -223,13 +225,11 @@
             letter-spacing: 0.05em;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
-            opacity: 0.4;
-            pointer-events: none;
+            opacity: 0.6; /* Increased slightly so it's visible */
         }
 
         .action-btn.ready {
             opacity: 1;
-            pointer-events: auto;
         }
 
         .action-btn.ready:hover {
@@ -264,6 +264,35 @@
         }
         .reset-paint-btn:active {
             transform: translateY(0);
+        }
+
+        /* Cool Patterns UI */
+        .patterns-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .patterns-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pattern-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .pattern-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--accent);
+            padding-left: 16px;
         }
 
         /* Elegant Player UI */
@@ -445,6 +474,50 @@
             background: rgba(255,255,255,0.08);
         }
 
+        /* Camera Snap Controls */
+        .camera-snaps {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .snap-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(22, 22, 28, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .snap-btn:hover {
+            color: #fff;
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: scale(1.15);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .snap-btn:active {
+            transform: scale(0.95);
+        }
+
         /* ============ MOBILE: Toggle Button (hidden on desktop) ============ */
         #mobile-toggle {
             display: none;
@@ -580,12 +653,10 @@
             text-transform: uppercase;
             letter-spacing: 0.06em;
             transition: all 0.3s;
-            opacity: 0.4;
-            pointer-events: none;
+            opacity: 0.6;
         }
         #mobile-drawer .drawer-solve-btn.ready {
             opacity: 1;
-            pointer-events: auto;
         }
         #mobile-drawer .drawer-solve-btn.ready:active {
             transform: scale(0.97);
@@ -619,6 +690,17 @@
             /* Show the drawer panel (starts off-screen via transform) */
             #mobile-drawer {
                 display: flex !important;
+            }
+
+            /* Camera snaps adjustment for mobile */
+            .camera-snaps {
+                right: 16px;
+                gap: 8px;
+            }
+            .snap-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 0.8rem;
             }
 
             /* ---- Solving screen: player panel ---- */
@@ -710,6 +792,15 @@
 <body>
     <div id="canvas-container"></div>
 
+    <div class="camera-snaps">
+        <button class="snap-btn" data-face="U" title="Top Face">U</button>
+        <button class="snap-btn" data-face="D" title="Bottom Face">D</button>
+        <button class="snap-btn" data-face="F" title="Front Face">F</button>
+        <button class="snap-btn" data-face="B" title="Back Face">B</button>
+        <button class="snap-btn" data-face="L" title="Left Face">L</button>
+        <button class="snap-btn" data-face="R" title="Right Face">R</button>
+    </div>
+
     <!-- Mobile: floating toggle button -->
     <button id="mobile-toggle" onclick="toggleMobileDrawer()">
         <span class="toggle-dot"></span>
@@ -736,6 +827,16 @@
         </div>
         <button id="mobile-solve-btn" class="drawer-solve-btn">Solve Cube</button>
         <button id="mobile-reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
+        
+        <div class="patterns-section" style="margin-top: 16px; padding-top: 16px;">
+            <div class="section-title" style="margin-bottom: 12px;">Cool Patterns</div>
+            <div class="patterns-grid">
+                <button class="pattern-btn" data-pattern="M2 E2 S2">Checkerboard</button>
+                <button class="pattern-btn" data-pattern="U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2">Superflip</button>
+                <button class="pattern-btn" data-pattern="F L F U' R U F2 L2 U' L' B D' B' L2 U">Cube in a Cube</button>
+            </div>
+        </div>
+
         <div class="drawer-handle"></div>
     </div>
 
@@ -769,6 +870,15 @@
             
             <button id="trigger-solve-btn" class="action-btn">Solve Cube</button>
             <button id="reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
+
+            <div class="patterns-section">
+                <div class="section-title">Cool Patterns</div>
+                <div class="patterns-grid">
+                    <button class="pattern-btn" data-pattern="M2 E2 S2">Checkerboard</button>
+                    <button class="pattern-btn" data-pattern="U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2">Superflip</button>
+                    <button class="pattern-btn" data-pattern="F L F U' R U F2 L2 U' L' B D' B' L2 U">Cube in a Cube</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -797,5 +907,12 @@
     </div>
 
     <script src="/static/main.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>

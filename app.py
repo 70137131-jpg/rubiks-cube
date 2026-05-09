@@ -7,6 +7,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/sw.js')
+def sw():
+    return app.send_static_file('sw.js')
+
 def format_kociemba_state(cube_state_dict):
     """
     Parses the incoming JSON payload (the 54 sticker colors in a dict of faces).
@@ -60,10 +64,25 @@ def solve_cube():
             "move_count": move_count
         })
     except ValueError as e:
-        # Kociemba throws ValueError if the cube is physically impossible/unsolvable
+        error_msg = str(e)
+        friendly_msg = "The cube is unsolvable. Please double-check your colors."
+        
+        if "Error 1" in error_msg:
+            friendly_msg = "Incorrect colors! There must be exactly 9 tiles of each color."
+        elif "Error 2" in error_msg:
+            friendly_msg = "Invalid edges! Check for duplicate or missing edge pieces."
+        elif "Error 3" in error_msg:
+            friendly_msg = "Wait! A single edge piece appears to be flipped impossibly."
+        elif "Error 4" in error_msg:
+            friendly_msg = "Invalid corners! Check for duplicate or missing corner pieces."
+        elif "Error 5" in error_msg:
+            friendly_msg = "Hold on! A corner piece seems to be twisted impossibly."
+        elif "Error 6" in error_msg:
+            friendly_msg = "Impossible swap! Two pieces are exchanged. Check your placement."
+            
         return jsonify({
             "status": "error", 
-            "message": "Cube is unsolvable. Please check if your colors are placed correctly."
+            "message": friendly_msg
         }), 400
     except Exception as e:
         return jsonify({"status": "error", "message": f"Processing error: {str(e)}"}), 400

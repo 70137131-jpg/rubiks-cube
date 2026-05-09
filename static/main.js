@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSolvingTriggered = false;
     let isAnimatingMove = false;
 
+    // Initialize Cube.js solver in the background
+    if (typeof Cube !== 'undefined') {
+        setTimeout(() => {
+            Cube.initSolver();
+        }, 500);
+    }
+
     const hexColors = {
         'W': 0xffffff, 'Y': 0xffd500, 'G': 0x009e60,
         'B': 0x0051ba, 'O': 0xff5800, 'R': 0xc41e3a,
@@ -120,11 +127,41 @@ document.addEventListener('DOMContentLoaded', () => {
         toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
+    function pulseMissingPieces() {
+        let missingFound = false;
+        stickers.forEach(sticker => {
+            if (!sticker.userData.color && !sticker.userData.isCenter) {
+                missingFound = true;
+                let p = 0;
+                function loop() {
+                    p += 0.1;
+                    if (p <= Math.PI) {
+                        // Fade to red and back
+                        let intensity = Math.floor(Math.sin(p) * 200);
+                        sticker.material.emissive.setHex(intensity << 16);
+                        requestAnimationFrame(loop);
+                    } else {
+                        sticker.material.emissive.setHex(0x000000);
+                    }
+                }
+                loop();
+            }
+        });
+        if (missingFound) {
+            showToast("Please paint all 54 tiles to solve.");
+        }
+        return missingFound;
+    }
+
     const triggerSolveBtn = document.getElementById('trigger-solve-btn');
     triggerSolveBtn.addEventListener('click', () => {
+        if (!triggerSolveBtn.classList.contains('ready')) {
+            pulseMissingPieces();
+            return;
+        }
         if (!isSolvingTriggered) {
             isSolvingTriggered = true;
-            submitToFlask();
+            solveCubeLocal();
         }
     });
 
@@ -268,55 +305,82 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('speed-label').innerText = animationSpeed.toFixed(1) + 'x';
     });
 
-    function submitToFlask() {
+    function formatKociembaState(state) {
+        const c2f = { 'W': 'U', 'R': 'R', 'G': 'F', 'Y': 'D', 'O': 'L', 'B': 'B' };
+        let str = "";
+        ['U', 'R', 'F', 'D', 'L', 'B'].forEach(face => {
+            state[face].forEach(c => str += c2f[c]);
+        });
+        return str;
+    }
+
+    function handleSolveSuccess(solutionStr) {
+        loadingOverlay.style.display = 'none';
+        solutionMoves = solutionStr ? solutionStr.split(' ') : [];
+        
+        // Smooth UI Transition
+        uiLayer.style.opacity = '0';
+        uiLayer.style.transform = 'translateY(20px)';
+        setTimeout(() => uiLayer.style.display = 'none', 500);
+        
+        document.getElementById('reset-btn').style.display = 'block';
+
+        // Hide mobile toggle pill during solving
+        const mobileToggle = document.getElementById('mobile-toggle');
+        if (mobileToggle) mobileToggle.style.display = 'none';
+
+        playerPanel.style.display = 'flex';
+        void playerPanel.offsetWidth;
+        playerPanel.classList.add('active');
+        
+        // Isometric view
+        cubeGroup.quaternion.setFromEuler(new THREE.Euler(Math.PI/6, -Math.PI/4, 0));
+        
+        if (solutionMoves.length === 0) {
+            document.getElementById('current-move-text').innerText = "Perfectly Solved";
+            document.getElementById('play-pause-btn').style.display = 'none';
+        } else {
+            document.getElementById('current-move-text').innerText = `Sequence Ready`;
+        }
+    }
+
+    function solveCubeLocal() {
         loadingOverlay.style.display = 'flex';
         
-        fetch('/solve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(cubeState)
-        })
-        .then(r => r.json())
-        .then(data => {
-            loadingOverlay.style.display = 'none';
-            if (data.status === 'success') {
-                solutionMoves = data.solution ? data.solution.split(' ') : [];
-                
-                // Smooth UI Transition
-                uiLayer.style.opacity = '0';
-                uiLayer.style.transform = 'translateY(20px)';
-                setTimeout(() => uiLayer.style.display = 'none', 500);
-                
-                document.getElementById('reset-btn').style.display = 'block';
-
-                // Hide mobile toggle pill during solving (Start Fresh takes its spot)
-                const mobileToggle = document.getElementById('mobile-toggle');
-                if (mobileToggle) mobileToggle.style.display = 'none';
-
-                playerPanel.style.display = 'flex';
-                // Trigger reflow
-                void playerPanel.offsetWidth;
-                playerPanel.classList.add('active');
-                
-                // Isometric view
-                cubeGroup.quaternion.setFromEuler(new THREE.Euler(Math.PI/6, -Math.PI/4, 0));
-                
-                if (solutionMoves.length === 0) {
-                    document.getElementById('current-move-text').innerText = "Perfectly Solved";
-                    document.getElementById('play-pause-btn').style.display = 'none';
-                } else {
-                    document.getElementById('current-move-text').innerText = `Sequence Ready`;
+        setTimeout(() => {
+            try {
+                let cubeStr = formatKociembaState(cubeState);
+                if (cubeStr === "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB") {
+                    handleSolveSuccess("");
+                    return;
                 }
-            } else {
-                showToast(data.message);
+
+                let cube = Cube.fromString(cubeStr);
+                let solution = cube.solve();
+                if (!solution && solution !== "") {
+                    throw new Error("Cube is unsolvable. Please check your colors.");
+                }
+                
+                let solutionStr = solution.replace(/'/g, "i");
+                handleSolveSuccess(solutionStr);
+            } catch (err) {
+                loadingOverlay.style.display = 'none';
                 isSolvingTriggered = false;
+                
+                let eMsg = err.message || "Invalid cube state.";
+                let fMsg = "The cube is unsolvable. Please double-check your colors.";
+                
+                // Generic mapping for cubejs errors
+                if (eMsg.includes("facelet")) fMsg = "Incorrect colors! There must be exactly 9 tiles of each color.";
+                else if (eMsg.includes("edges exist")) fMsg = "Invalid edges! Check for duplicate or missing edge pieces.";
+                else if (eMsg.includes("flipped")) fMsg = "Wait! A single edge piece appears to be flipped impossibly.";
+                else if (eMsg.includes("corners exist")) fMsg = "Invalid corners! Check for duplicate or missing corner pieces.";
+                else if (eMsg.includes("twisted")) fMsg = "Hold on! A corner piece seems to be twisted impossibly.";
+                else if (eMsg.includes("exchanged")) fMsg = "Impossible swap! Two pieces are exchanged.";
+                
+                showToast(fMsg);
             }
-        })
-        .catch(err => {
-            loadingOverlay.style.display = 'none';
-            showToast("Network Error.");
-            isSolvingTriggered = false;
-        });
+        }, 50);
     }
 
     function getMoveParams(move) {
@@ -473,6 +537,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Camera Snapping
+    const snapTargets = {
+        'U': { x: 0.01, y: 10, z: 0 }, // slight x offset avoids gimbal lock when looking straight up/down
+        'D': { x: 0.01, y: -10, z: 0 },
+        'F': { x: 0, y: 0, z: 10 },
+        'B': { x: 0, y: 0, z: -10 },
+        'L': { x: -10, y: 0, z: 0 },
+        'R': { x: 10, y: 0, z: 0 }
+    };
+
+    let cameraAnimFrame = null;
+    document.querySelectorAll('.snap-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const face = btn.dataset.face;
+            if (!snapTargets[face]) return;
+            
+            const targetPos = snapTargets[face];
+            const startPos = camera.position.clone();
+            
+            if (cameraAnimFrame) cancelAnimationFrame(cameraAnimFrame);
+            
+            let p = 0;
+            function animateCamera() {
+                p += 0.04; // Adjust speed here
+                if (p > 1) p = 1;
+                
+                // Ease out cubic
+                const ease = 1 - Math.pow(1 - p, 3);
+                
+                camera.position.x = startPos.x + (targetPos.x - startPos.x) * ease;
+                camera.position.y = startPos.y + (targetPos.y - startPos.y) * ease;
+                camera.position.z = startPos.z + (targetPos.z - startPos.z) * ease;
+                
+                // Smoothly snap target (lookAt point) back to center (0,0,0)
+                controls.target.x = controls.target.x * (1 - ease);
+                controls.target.y = controls.target.y * (1 - ease);
+                controls.target.z = controls.target.z * (1 - ease);
+                
+                if (p < 1) {
+                    cameraAnimFrame = requestAnimationFrame(animateCamera);
+                }
+            }
+            animateCamera();
+        });
+    });
+
     // Render Loop
     function render() {
         requestAnimationFrame(render);
@@ -529,7 +639,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const desktopSolveBtn = document.getElementById('trigger-solve-btn');
     mobileSolveBtn.addEventListener('click', () => {
         desktopSolveBtn.click();
-        toggleMobileDrawer();
+        // Only close the drawer if we actually started solving
+        if (mobileSolveBtn.classList.contains('ready')) {
+            toggleMobileDrawer();
+        }
     });
 
     // Mobile reset button
@@ -549,4 +662,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     observer.observe(document.getElementById('painted-count'), { childList: true, characterData: true, subtree: true });
     observer.observe(document.getElementById('progress-bar-fill'), { attributes: true, attributeFilter: ['style'] });
+
+    // Cool Patterns Logic
+    function applyPattern(patternMoves) {
+        // First fill the cube completely (solved state)
+        stickers.forEach(sticker => {
+            const f = sticker.userData.face;
+            const centerC = getCenterColor(f);
+            sticker.userData.color = centerC;
+            sticker.material.color.setHex(hexColors[centerC]);
+            sticker.material.emissive.setHex(0x000000);
+            cubeState[f][sticker.userData.index] = centerC;
+        });
+        
+        colorCounts = { 'W': 9, 'Y': 9, 'G': 9, 'B': 9, 'O': 9, 'R': 9 };
+        updatePaintedCount();
+        
+        // Start solving animation sequence backwards? Or just animate the moves
+        isSolvingTriggered = true;
+        let solutionStr = patternMoves.replace(/'/g, "i");
+        handleSolveSuccess(solutionStr);
+        
+        document.getElementById('current-move-text').innerText = "Pattern Ready";
+    }
+
+    document.querySelectorAll('.pattern-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (isSolvingTriggered || isAnimatingMove) return;
+            applyPattern(btn.dataset.pattern);
+            if (mobileDrawerOpen) toggleMobileDrawer();
+        });
+    });
 });

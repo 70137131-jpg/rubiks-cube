@@ -1,0 +1,9 @@
+{
+  "name": "Rubik's Canvas",
+  "short_name": "Cube Canvas",
+  "description": "A beautiful 3D Rubik's Cube painter and solver.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070709",
+  "theme_color": "#8b5cf6"
+}
