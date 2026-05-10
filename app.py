@@ -21,70 +21,34 @@ _SCRAMBLE_MOVES = [
 # Map kociemba face ID → UI color code used in the frontend
 _FACE_TO_COLOR = {'U': 'W', 'R': 'R', 'F': 'G', 'D': 'Y', 'L': 'O', 'B': 'B'}
 
-def _apply_move(state: list, move: str) -> list:
-    """Return a new 54-element list after applying a single kociemba-style move.
-    
-    state  – list of 54 single-char kociemba face letters (U R F D L B order).
-    move   – one of the 18 move strings in _SCRAMBLE_MOVES.
-    """
-    # Index layout for each face (9 stickers per face):
-    # U: 0-8   R: 9-17   F: 18-26   D: 27-35   L: 36-44   B: 45-53
-    # Within a face, row-major left→right, top→bottom when viewed from outside.
-    s = list(state)
-
-    def cycle4(a, b, c, d):
-        s[a], s[b], s[c], s[d] = s[d], s[a], s[b], s[c]
-
-    def rotate_face_cw(f):
-        """Rotate a 3×3 face clockwise (indices 0-8 of the face block, offset by f*9)."""
-        o = f * 9
-        s[o], s[o+1], s[o+2], s[o+3], s[o+4], s[o+5], s[o+6], s[o+7], s[o+8] = \
-            s[o+6], s[o+3], s[o+0], s[o+7], s[o+4], s[o+1], s[o+8], s[o+5], s[o+2]
-
-    def rotate_face_ccw(f):
-        o = f * 9
-        s[o], s[o+1], s[o+2], s[o+3], s[o+4], s[o+5], s[o+6], s[o+7], s[o+8] = \
-            s[o+2], s[o+5], s[o+8], s[o+1], s[o+4], s[o+7], s[o+0], s[o+3], s[o+6]
-
-    base = move.replace('i', '').replace('2', '')
-    is_prime = 'i' in move
-    is_double = '2' in move
-    reps = 2 if is_double else (3 if is_prime else 1)
-
-    for _ in range(reps):
-        if base == 'U':
-            rotate_face_cw(0)
-            cycle4(9,18,36,45); cycle4(10,19,37,46); cycle4(11,20,38,47)
-        elif base == 'D':
-            rotate_face_cw(3)
-            cycle4(15,48,42,21); cycle4(16,49,43,22); cycle4(17,50,44,23)
-        elif base == 'R':
-            rotate_face_cw(1)
-            cycle4(2,18,29,47); cycle4(5,21,32,50); cycle4(8,24,35,53)
-        elif base == 'L':
-            rotate_face_cw(4)
-            cycle4(0,45,27,20); cycle4(3,48,30,23); cycle4(6,51,33,26)
-        elif base == 'F':
-            rotate_face_cw(2)
-            cycle4(6,9,29,44); cycle4(7,12,28,41); cycle4(8,15,27,38)
-        elif base == 'B':
-            rotate_face_cw(5)
-            cycle4(0,36,35,11); cycle4(1,39,34,14); cycle4(2,42,33,17)
-    return s
-
-
 def _scramble(n: int = 20) -> list:
-    """Apply n random moves to a solved cube, avoiding redundant back-to-back moves."""
-    state = list(_SOLVED_KOCIEMBA)
+    """Generate a random valid scrambled cube state in Kociemba face-order."""
+    from rubik.cube import Cube
+    c = Cube("UUUUUUUUULLLFFFRRRBBBLLLFFFRRRBBBLLLFFFRRRBBBDDDDDDDDD")
     last_base = None
     for _ in range(n):
-        # Pick a move with a different base face than the last
-        candidates = [m for m in _SCRAMBLE_MOVES
-                      if m.replace('i','').replace('2','') != last_base]
+        candidates = [m for m in _SCRAMBLE_MOVES if m.replace('i','').replace('2','') != last_base]
         move = random.choice(candidates)
-        state = _apply_move(state, move)
-        last_base = move.replace('i','').replace('2','')
-    return state
+        base = move[0]
+        if '2' in move:
+            getattr(c, base)()
+            getattr(c, base)()
+        elif 'i' in move:
+            getattr(c, base + 'i')()
+        else:
+            getattr(c, base)()
+        last_base = base
+        
+    s = c.flat_str()
+    U = s[0:9]
+    R = s[15:18] + s[27:30] + s[39:42]
+    F = s[12:15] + s[24:27] + s[36:39]
+    D = s[45:54]
+    L = s[9:12] + s[21:24] + s[33:36]
+    B = s[18:21] + s[30:33] + s[42:45]
+    
+    return list(U + R + F + D + L + B)
+
 
 
 def _state_to_face_dict(state: list) -> dict:
