@@ -64,6 +64,7 @@
             flex-direction: column;
             padding: 40px 32px;
             box-sizing: border-box;
+            overflow-y: auto;
             box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
             transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -90,6 +91,67 @@
             margin-bottom: 40px;
             border: 1px solid rgba(255,255,255,0.03);
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .solve-guidance {
+            margin-top: 12px;
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            line-height: 1.4;
+        }
+
+        .stats-panel {
+            margin-bottom: 28px;
+        }
+
+        .color-count-grid,
+        .face-progress-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .count-chip,
+        .face-chip {
+            min-height: 44px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .count-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex: 0 0 16px;
+            box-shadow: inset 0 1px 4px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.25);
+        }
+
+        .count-chip.complete,
+        .face-chip.complete {
+            color: #fff;
+            border-color: rgba(74, 222, 128, 0.35);
+            background: rgba(74, 222, 128, 0.08);
+        }
+
+        .face-chip {
+            justify-content: space-between;
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: 0.02em;
+        }
+
+        .face-chip span:last-child {
+            color: var(--accent-hover);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.76rem;
+            letter-spacing: 0;
         }
 
         .progress-header {
@@ -333,6 +395,38 @@
             font-weight: 700;
         }
 
+        .move-progress {
+            min-width: 170px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .move-progress-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .move-progress-track {
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+
+        .move-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--accent), #c4b5fd);
+            transition: width 0.25s ease;
+        }
+
         .player-controls {
             display: flex;
             gap: 16px;
@@ -557,6 +651,88 @@
             box-shadow: 0 0 8px var(--accent);
             transition: background 0.3s;
         }
+
+        .mobile-status {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            z-index: 18;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 18px;
+            background: rgba(18, 18, 24, 0.82);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+        }
+
+        .mobile-status-count {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .mobile-status-note {
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-color-dock {
+            display: none;
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 14px;
+            z-index: 24;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            padding: 10px;
+            border-radius: 22px;
+            background: rgba(18, 18, 24, 0.92);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 18px 48px rgba(0,0,0,0.55);
+        }
+
+        .mobile-color-btn {
+            min-height: 52px;
+            border-radius: 16px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(255,255,255,0.18), inset 0 -2px 10px rgba(0,0,0,0.22);
+        }
+
+        .mobile-color-btn.active {
+            border-color: #fff;
+            transform: translateY(-3px);
+        }
+
+        .mobile-color-btn::after {
+            content: attr(data-count);
+            position: absolute;
+            right: 6px;
+            bottom: 5px;
+            min-width: 22px;
+            padding: 2px 5px;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.42);
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-align: center;
+        }
         #mobile-toggle.open .toggle-dot {
             background: #f87171;
             box-shadow: 0 0 8px #f87171;
@@ -630,6 +806,10 @@
             gap: 12px;
             margin-bottom: 16px;
         }
+
+        #mobile-drawer .mobile-face-progress {
+            margin-bottom: 16px;
+        }
         #mobile-drawer .drawer-color-btn {
             aspect-ratio: 1;
             border-radius: 14px;
@@ -689,15 +869,34 @@
             /* Show the floating toggle pill */
             #mobile-toggle {
                 display: flex !important;
+                top: auto;
+                bottom: 88px;
+                left: auto;
+                right: 16px;
+                transform: none;
+                padding: 11px 16px;
+            }
+            #mobile-toggle:active {
+                transform: scale(0.96);
             }
             /* Show the drawer panel (starts off-screen via transform) */
             #mobile-drawer {
                 display: flex !important;
+                padding-top: 72px;
+            }
+
+            .mobile-status {
+                display: flex;
+            }
+
+            .mobile-color-dock {
+                display: grid;
             }
 
             /* Camera snaps adjustment for mobile */
             .camera-snaps {
                 right: 16px;
+                top: 44%;
                 gap: 8px;
             }
             .snap-btn {
@@ -729,6 +928,12 @@
                 text-align: center;
                 padding-bottom: 18px;
                 border-bottom: 1px solid rgba(255,255,255,0.07);
+                margin-bottom: 18px;
+            }
+
+            .move-progress {
+                width: 100%;
+                min-width: 0;
                 margin-bottom: 18px;
             }
 
@@ -766,11 +971,11 @@
             /* Start Fresh: top-center, clear of the player panel */
             .reset-link {
                 position: fixed;
-                top: 20px;
-                right: auto;
-                left: 50%;
+                top: 76px;
+                right: 16px;
+                left: auto;
                 bottom: auto;
-                transform: translateX(-50%);
+                transform: none;
                 white-space: nowrap;
                 z-index: 30;
                 font-size: 0.85rem;
@@ -780,7 +985,7 @@
             /* Toast: bottom-center on mobile */
             .toast {
                 top: auto;
-                bottom: 20px;
+                bottom: 100px;
                 right: auto;
                 left: 50%;
                 transform: translateX(calc(-50% + 20px));
@@ -795,6 +1000,11 @@
 <body>
     <div id="canvas-container"></div>
 
+    <div class="mobile-status" id="mobile-status">
+        <div class="mobile-status-count"><span id="mobile-painted-count-top">6</span>/54</div>
+        <div class="mobile-status-note" id="mobile-solve-guidance">Paint 48 more stickers.</div>
+    </div>
+
     <div class="camera-snaps">
         <button class="snap-btn" data-face="U" title="Top Face">U</button>
         <button class="snap-btn" data-face="D" title="Bottom Face">D</button>
@@ -807,30 +1017,39 @@
     <!-- Mobile: floating toggle button -->
     <button id="mobile-toggle" onclick="toggleMobileDrawer()">
         <span class="toggle-dot"></span>
-        <span id="mobile-toggle-label">Paint Colors</span>
+        <span id="mobile-toggle-label">More</span>
     </button>
+
+    <div class="mobile-color-dock">
+        <button class="mobile-color-btn active" data-color="W" data-count="1/9" style="background:#FFFFFF" aria-label="White"></button>
+        <button class="mobile-color-btn" data-color="Y" data-count="1/9" style="background:#FFD500" aria-label="Yellow"></button>
+        <button class="mobile-color-btn" data-color="G" data-count="1/9" style="background:#009E60" aria-label="Green"></button>
+        <button class="mobile-color-btn" data-color="B" data-count="1/9" style="background:#0051BA" aria-label="Blue"></button>
+        <button class="mobile-color-btn" data-color="O" data-count="1/9" style="background:#FF5800" aria-label="Orange"></button>
+        <button class="mobile-color-btn" data-color="R" data-count="1/9" style="background:#C41E3A" aria-label="Red"></button>
+    </div>
 
     <!-- Mobile: slide-down drawer -->
     <div id="mobile-drawer">
         <div class="drawer-title">Cube Canvas</div>
-        <div class="drawer-sub">Tap a color, then tap a tile on the cube to paint it.</div>
+        <div class="drawer-sub">Quick actions and face completion while you paint.</div>
         <div class="drawer-progress">
             <div class="drawer-progress-bar">
                 <div class="drawer-progress-fill" id="mobile-progress-fill"></div>
             </div>
             <div class="drawer-count"><span id="mobile-painted-count">6</span>/54</div>
         </div>
-        <div class="drawer-colors">
-            <div class="drawer-color-btn active" data-color="W" style="background:#FFFFFF"></div>
-            <div class="drawer-color-btn" data-color="Y" style="background:#FFD500"></div>
-            <div class="drawer-color-btn" data-color="G" style="background:#009E60"></div>
-            <div class="drawer-color-btn" data-color="B" style="background:#0051BA"></div>
-            <div class="drawer-color-btn" data-color="O" style="background:#FF5800"></div>
-            <div class="drawer-color-btn" data-color="R" style="background:#C41E3A"></div>
+        <div class="face-progress-grid mobile-face-progress">
+            <div class="face-chip" data-face-progress="U"><span>U</span><span>1/9</span></div>
+            <div class="face-chip" data-face-progress="D"><span>D</span><span>1/9</span></div>
+            <div class="face-chip" data-face-progress="F"><span>F</span><span>1/9</span></div>
+            <div class="face-chip" data-face-progress="B"><span>B</span><span>1/9</span></div>
+            <div class="face-chip" data-face-progress="L"><span>L</span><span>1/9</span></div>
+            <div class="face-chip" data-face-progress="R"><span>R</span><span>1/9</span></div>
         </div>
         <button id="mobile-solve-btn" class="drawer-solve-btn">Solve Cube</button>
-        <button id="mobile-randomize-btn" class="randomize-btn">🎲 Randomize</button>
-        <button id="mobile-reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
+        <button id="mobile-randomize-btn" class="randomize-btn">Randomize</button>
+        <button id="mobile-reset-paint-btn" class="reset-paint-btn">Reset to Start</button>
         
         <div class="drawer-handle"></div>
     </div>
@@ -849,6 +1068,31 @@
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="progress-bar-fill"></div>
             </div>
+            <div class="solve-guidance" id="solve-guidance">Paint 48 more stickers.</div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="section-title">Color Limits</div>
+            <div class="color-count-grid">
+                <div class="count-chip" data-color-count="W"><span class="count-dot" style="background:#FFFFFF"></span><span>W 1/9</span></div>
+                <div class="count-chip" data-color-count="Y"><span class="count-dot" style="background:#FFD500"></span><span>Y 1/9</span></div>
+                <div class="count-chip" data-color-count="G"><span class="count-dot" style="background:#009E60"></span><span>G 1/9</span></div>
+                <div class="count-chip" data-color-count="B"><span class="count-dot" style="background:#0051BA"></span><span>B 1/9</span></div>
+                <div class="count-chip" data-color-count="O"><span class="count-dot" style="background:#FF5800"></span><span>O 1/9</span></div>
+                <div class="count-chip" data-color-count="R"><span class="count-dot" style="background:#C41E3A"></span><span>R 1/9</span></div>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="section-title">Face Progress</div>
+            <div class="face-progress-grid">
+                <div class="face-chip" data-face-progress="U"><span>U</span><span>1/9</span></div>
+                <div class="face-chip" data-face-progress="D"><span>D</span><span>1/9</span></div>
+                <div class="face-chip" data-face-progress="F"><span>F</span><span>1/9</span></div>
+                <div class="face-chip" data-face-progress="B"><span>B</span><span>1/9</span></div>
+                <div class="face-chip" data-face-progress="L"><span>L</span><span>1/9</span></div>
+                <div class="face-chip" data-face-progress="R"><span>R</span><span>1/9</span></div>
+            </div>
         </div>
 
         <div class="palette-section">
@@ -864,8 +1108,8 @@
             <div class="lock-note">Core centers are structurally locked.</div>
             
             <button id="trigger-solve-btn" class="action-btn">Solve Cube</button>
-            <button id="randomize-btn" class="randomize-btn">🎲 Randomize</button>
-            <button id="reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
+            <button id="randomize-btn" class="randomize-btn">Randomize</button>
+            <button id="reset-paint-btn" class="reset-paint-btn">Reset to Start</button>
 
 
         </div>
@@ -873,6 +1117,15 @@
 
     <div id="player-panel">
         <div class="move-display" id="current-move-text">Analyzing</div>
+        <div class="move-progress">
+            <div class="move-progress-meta">
+                <span id="move-progress-label">Move 0 of 0</span>
+                <span id="move-progress-percent">0%</span>
+            </div>
+            <div class="move-progress-track">
+                <div class="move-progress-fill" id="move-progress-fill"></div>
+            </div>
+        </div>
         
         <div class="player-controls">
             <button id="prev-move-btn" class="ctrl-btn">Prev</button>

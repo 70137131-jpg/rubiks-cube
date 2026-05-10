@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // UI Elements
     const canvasContainer = document.getElementById('canvas-container');
     const colorBtns = document.querySelectorAll('.color-btn');
+    const mobileColorBtns = document.querySelectorAll('.mobile-color-btn');
     const toast = document.getElementById('toast');
     const uiLayer = document.getElementById('ui-layer');
     const playerPanel = document.getElementById('player-panel');
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let colorCounts = { 'W': 1, 'Y': 1, 'G': 1, 'B': 1, 'O': 1, 'R': 1 };
+    const colorNames = { 'W': 'W', 'Y': 'Y', 'G': 'G', 'B': 'B', 'O': 'O', 'R': 'R' };
     
     let cubeState = {
         'F': Array(9).fill(null), 'R': Array(9).fill(null),
@@ -73,7 +75,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const gap = 1.05;
     const cubieGeo = new THREE.BoxGeometry(1, 1, 1);
     const cubieMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-    const planeGeo = new THREE.PlaneGeometry(0.9, 0.9);
+    function createRoundedStickerGeometry(width, height, radius) {
+        const x = -width / 2;
+        const y = -height / 2;
+        const shape = new THREE.Shape();
+
+        shape.moveTo(x + radius, y);
+        shape.lineTo(x + width - radius, y);
+        shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+        shape.lineTo(x + width, y + height - radius);
+        shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        shape.lineTo(x + radius, y + height);
+        shape.quadraticCurveTo(x, y + height, x, y + height - radius);
+        shape.lineTo(x, y + radius);
+        shape.quadraticCurveTo(x, y, x + radius, y);
+
+        return new THREE.ShapeGeometry(shape, 8);
+    }
+
+    const planeGeo = createRoundedStickerGeometry(0.88, 0.88, 0.08);
 
     function createSticker(parent, face, idx, pos, rot) {
         const isCenter = (idx === 4);
@@ -106,12 +126,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // UI Interactions
-    colorBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            colorBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeColor = btn.dataset.color;
+    function setActiveColor(color) {
+        activeColor = color;
+        document.querySelectorAll('.color-btn, .mobile-color-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.color === color);
         });
+    }
+
+    colorBtns.forEach(btn => {
+        btn.addEventListener('click', () => setActiveColor(btn.dataset.color));
+    });
+
+    mobileColorBtns.forEach(btn => {
+        btn.addEventListener('click', () => setActiveColor(btn.dataset.color));
     });
 
     let toastTimeout;
@@ -187,8 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show a subtle loading state on the button while fetching
         const btn = document.getElementById('randomize-btn');
         const mBtn = document.getElementById('mobile-randomize-btn');
-        if (btn) { btn.textContent = '⏳ Scrambling…'; btn.disabled = true; }
-        if (mBtn) { mBtn.textContent = '⏳ Scrambling…'; mBtn.disabled = true; }
+        if (btn) { btn.textContent = 'Scrambling...'; btn.disabled = true; }
+        if (mBtn) { mBtn.textContent = 'Scrambling...'; mBtn.disabled = true; }
 
         fetch('/randomize')
             .then(r => r.json())
@@ -225,8 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Scramble failed: ' + (err.message || 'try again'));
             })
             .finally(() => {
-                if (btn) { btn.textContent = '🎲 Randomize'; btn.disabled = false; }
-                if (mBtn) { mBtn.textContent = '🎲 Randomize'; mBtn.disabled = false; }
+                if (btn) { btn.textContent = 'Randomize'; btn.disabled = false; }
+                if (mBtn) { mBtn.textContent = 'Randomize'; mBtn.disabled = false; }
             });
     }
 
@@ -239,17 +266,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePaintedCount() {
         let count = 0;
-        for (let f in cubeState) count += cubeState[f].filter(c => c !== null).length;
+        const faceCounts = {};
+        for (let f in cubeState) {
+            faceCounts[f] = cubeState[f].filter(c => c !== null).length;
+            count += faceCounts[f];
+        }
         
         document.getElementById('painted-count').innerHTML = `${count}<span>/54</span>`;
         document.getElementById('progress-bar-fill').style.width = `${(count/54)*100}%`;
+
+        const remaining = 54 - count;
+        const guidance = remaining === 0 ? 'All stickers painted. Ready to solve.' : `Paint ${remaining} more sticker${remaining === 1 ? '' : 's'}.`;
+        const solveGuidance = document.getElementById('solve-guidance');
+        const mobileGuidance = document.getElementById('mobile-solve-guidance');
+        const mobileTopCount = document.getElementById('mobile-painted-count-top');
+        if (solveGuidance) solveGuidance.textContent = guidance;
+        if (mobileGuidance) mobileGuidance.textContent = guidance;
+        if (mobileTopCount) mobileTopCount.textContent = count;
+
+        document.querySelectorAll('[data-color-count]').forEach(chip => {
+            const color = chip.dataset.colorCount;
+            const value = colorCounts[color] || 0;
+            const label = chip.querySelector('span:last-child');
+            if (label) label.textContent = `${colorNames[color]} ${value}/9`;
+            chip.classList.toggle('complete', value === 9);
+        });
+
+        document.querySelectorAll('.mobile-color-btn').forEach(btn => {
+            const color = btn.dataset.color;
+            btn.dataset.count = `${colorCounts[color] || 0}/9`;
+        });
+
+        document.querySelectorAll('[data-face-progress]').forEach(chip => {
+            const face = chip.dataset.faceProgress;
+            const value = faceCounts[face] || 0;
+            const label = chip.querySelector('span:last-child');
+            if (label) label.textContent = `${value}/9`;
+            chip.classList.toggle('complete', value === 9);
+        });
         
         if (count === 54) {
             triggerSolveBtn.classList.add('ready');
         } else {
             triggerSolveBtn.classList.remove('ready');
         }
+
+        const mobileSolveBtn = document.getElementById('mobile-solve-btn');
+        if (mobileSolveBtn) {
+            mobileSolveBtn.classList.toggle('ready', count === 54);
+        }
     }
+
+    updatePaintedCount();
 
     // Raycasting & Painting
     const raycaster = new THREE.Raycaster();
@@ -345,6 +413,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let playTimeout = null;
     let animationSpeed = 1.0;
 
+    function updateMoveProgress(index = currentMoveIdx) {
+        const total = solutionMoves.length;
+        const clamped = Math.max(0, Math.min(index, total));
+        const percent = total ? Math.round((clamped / total) * 100) : 0;
+        const label = document.getElementById('move-progress-label');
+        const percentLabel = document.getElementById('move-progress-percent');
+        const fill = document.getElementById('move-progress-fill');
+        if (label) label.textContent = `Move ${clamped} of ${total}`;
+        if (percentLabel) percentLabel.textContent = `${percent}%`;
+        if (fill) fill.style.width = `${percent}%`;
+    }
+
     document.getElementById('speed-slider').addEventListener('input', (e) => {
         animationSpeed = parseFloat(e.target.value);
         document.getElementById('speed-label').innerText = animationSpeed.toFixed(1) + 'x';
@@ -353,6 +433,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSolveSuccess(solutionStr) {
         loadingOverlay.style.display = 'none';
         solutionMoves = solutionStr ? solutionStr.split(' ') : [];
+        currentMoveIdx = 0;
+        updateMoveProgress(0);
         
         // Smooth UI Transition
         uiLayer.style.opacity = '0';
@@ -364,6 +446,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide mobile toggle pill during solving
         const mobileToggle = document.getElementById('mobile-toggle');
         if (mobileToggle) mobileToggle.style.display = 'none';
+        const mobileDock = document.querySelector('.mobile-color-dock');
+        const mobileStatus = document.getElementById('mobile-status');
+        if (mobileDock) mobileDock.style.display = 'none';
+        if (mobileStatus) mobileStatus.style.display = 'none';
 
         playerPanel.style.display = 'flex';
         void playerPanel.offsetWidth;
@@ -375,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (solutionMoves.length === 0) {
             document.getElementById('current-move-text').innerText = "Perfectly Solved";
             document.getElementById('play-pause-btn').style.display = 'none';
+            updateMoveProgress(0);
         } else {
             document.getElementById('current-move-text').innerText = `Sequence Ready`;
         }
@@ -520,9 +607,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let move = solutionMoves[currentMoveIdx];
         document.getElementById('current-move-text').innerText = `${move} (${currentMoveIdx + 1}/${solutionMoves.length})`;
+        updateMoveProgress(currentMoveIdx);
         
         animateMove(move, 450, () => {
             currentMoveIdx++;
+            updateMoveProgress(currentMoveIdx);
             if (isPlaying) playTimeout = setTimeout(playNext, 150 / animationSpeed);
         });
     }
@@ -556,6 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         animateMove(inverseMove, 450, () => {
             document.getElementById('current-move-text').innerText = `Reverted (${currentMoveIdx}/${solutionMoves.length})`;
+            updateMoveProgress(currentMoveIdx);
         });
     });
 
@@ -630,7 +720,7 @@ function toggleMobileDrawer() {
     const label = document.getElementById('mobile-toggle-label');
     drawer.classList.toggle('open', mobileDrawerOpen);
     toggle.classList.toggle('open', mobileDrawerOpen);
-    label.textContent = mobileDrawerOpen ? 'Close' : 'Paint Colors';
+    label.textContent = mobileDrawerOpen ? 'Close' : 'More';
 }
 
 // Sync drawer color buttons with main JS activeColor
