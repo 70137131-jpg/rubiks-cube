@@ -187,10 +187,60 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePaintedCount();
     }
 
-    document.getElementById('reset-paint-btn').addEventListener('click', resetPainting);
+    // Randomize: fetch a valid scrambled state from the server and paint it
+    function randomizeCube() {
+        // Show a subtle loading state on the button while fetching
+        const btn = document.getElementById('randomize-btn');
+        const mBtn = document.getElementById('mobile-randomize-btn');
+        if (btn) { btn.textContent = '⏳ Scrambling…'; btn.disabled = true; }
+        if (mBtn) { mBtn.textContent = '⏳ Scrambling…'; mBtn.disabled = true; }
 
-    // Expose for mobile button
+        fetch('/randomize')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== 'success') throw new Error(data.message || 'Unknown error');
+
+                const cube = data.cube; // { U:[...9 colors], R:[...], F:[...], D:[...], L:[...], B:[...] }
+
+                // Reset all non-center stickers first
+                resetPainting();
+
+                // The server returns faces in kociemba order (U R F D L B).
+                // cubeState uses the same face keys; just map them straight across.
+                const newCounts = { 'W': 0, 'Y': 0, 'G': 0, 'B': 0, 'O': 0, 'R': 0 };
+
+                stickers.forEach(sticker => {
+                    const f = sticker.userData.face;
+                    const idx = sticker.userData.index;
+                    const color = cube[f][idx];
+
+                    sticker.userData.color = color;
+                    sticker.material.color.setHex(hexColors[color]);
+                    sticker.material.emissive.setHex(0x000000);
+                    cubeState[f][idx] = color;
+                    newCounts[color] = (newCounts[color] || 0) + 1;
+                });
+
+                colorCounts = newCounts;
+                updatePaintedCount();
+
+                showToast('Cube scrambled! Hit Solve to fix it.');
+            })
+            .catch(err => {
+                showToast('Scramble failed: ' + (err.message || 'try again'));
+            })
+            .finally(() => {
+                if (btn) { btn.textContent = '🎲 Randomize'; btn.disabled = false; }
+                if (mBtn) { mBtn.textContent = '🎲 Randomize'; mBtn.disabled = false; }
+            });
+    }
+
+    document.getElementById('reset-paint-btn').addEventListener('click', resetPainting);
+    document.getElementById('randomize-btn').addEventListener('click', randomizeCube);
+
+    // Expose for mobile buttons
     window._resetPainting = resetPainting;
+    window._randomizeCube = randomizeCube;
 
     function updatePaintedCount() {
         let count = 0;
@@ -648,6 +698,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mobile reset button
     document.getElementById('mobile-reset-paint-btn').addEventListener('click', () => {
         if (window._resetPainting) window._resetPainting();
+        toggleMobileDrawer();
+    });
+
+    // Mobile randomize button
+    document.getElementById('mobile-randomize-btn').addEventListener('click', () => {
+        if (window._randomizeCube) window._randomizeCube();
         toggleMobileDrawer();
     });
 
