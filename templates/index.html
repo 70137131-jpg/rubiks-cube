@@ -23,6 +23,29 @@
             margin: 0;
             overflow: hidden;
             background-color: var(--bg-dark);
+
+        /* Mobile floating solve button (hidden on desktop) */
+        .mobile-solve-floating {
+            display: none;
+            position: fixed;
+            z-index: 26;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+            cursor: pointer;
+            transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.2s;
+            opacity: 0.95;
+        }
+
+        .mobile-solve-floating:active { transform: scale(0.985); }
+
+        .mobile-solve-floating.ready { box-shadow: 0 10px 30px rgba(99,102,241,0.28); }
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
             user-select: none;
@@ -384,6 +407,42 @@
         #player-panel.active {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
+        }
+
+        #player-panel.collapsed {
+            padding: 10px 14px;
+            gap: 10px;
+            width: auto;
+            min-width: 0;
+        }
+
+        #player-panel.collapsed .move-display,
+        #player-panel.collapsed .move-progress,
+        #player-panel.collapsed .player-controls,
+        #player-panel.collapsed .speed-control {
+            display: none;
+        }
+
+        .collapse-btn {
+            border: none;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text-main);
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            padding: 9px 13px;
+            text-transform: uppercase;
+            transition: background 0.2s, color 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+
+        .collapse-btn:hover {
+            background: rgba(139, 92, 246, 0.22);
+            color: #fff;
+            transform: translateY(-1px);
         }
 
         .move-display {
@@ -893,6 +952,16 @@
                 display: grid;
             }
 
+            /* show floating solve button on mobile */
+            .mobile-solve-floating {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                right: 16px;
+                bottom: 150px;
+                min-width: 84px;
+            }
+
             /* Camera snaps adjustment for mobile */
             .camera-snaps {
                 right: 16px;
@@ -907,34 +976,61 @@
 
             /* ---- Solving screen: player panel ---- */
             #player-panel {
-                bottom: 0;
-                left: 0;
-                right: 0;
-                transform: translateY(100%);
+                bottom: 12px;
+                left: 12px;
+                right: 12px;
+                transform: translateY(calc(100% + 24px));
                 border-radius: 28px 28px 0 0;
                 flex-direction: column;
                 align-items: stretch;
                 gap: 0;
-                padding: 24px 24px 36px;
+                padding: 16px;
                 width: auto;
+                max-height: 42vh;
+                overflow-y: auto;
             }
             #player-panel.active {
                 transform: translateY(0);
             }
 
+            #player-panel.collapsed {
+                left: 50%;
+                right: auto;
+                bottom: 14px;
+                width: auto;
+                transform: translateX(-50%) translateY(0);
+                border-radius: 999px;
+                padding: 8px;
+                overflow: visible;
+            }
+
+            #player-panel.collapsed.active {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            .collapse-btn {
+                width: 100%;
+                padding: 10px 14px;
+                font-size: 0.74rem;
+            }
+
+            #player-panel.collapsed .collapse-btn {
+                width: auto;
+            }
+
             .move-display {
-                font-size: 1.5rem;
+                font-size: 1.15rem;
                 min-width: unset;
                 text-align: center;
-                padding-bottom: 18px;
+                padding-bottom: 12px;
                 border-bottom: 1px solid rgba(255,255,255,0.07);
-                margin-bottom: 18px;
+                margin-bottom: 12px;
             }
 
             .move-progress {
                 width: 100%;
                 min-width: 0;
-                margin-bottom: 18px;
+                margin-bottom: 12px;
             }
 
             .player-controls {
@@ -942,9 +1038,9 @@
                 border-right: none;
                 justify-content: center;
                 gap: 0;
-                padding: 0 0 18px 0;
+                padding: 0 0 12px 0;
                 border-bottom: 1px solid rgba(255,255,255,0.07);
-                margin-bottom: 18px;
+                margin-bottom: 12px;
             }
 
             .ctrl-btn {
@@ -1020,6 +1116,9 @@
         <span id="mobile-toggle-label">More</span>
     </button>
 
+    <!-- Mobile floating Solve button (visible on mobile, removed from drawer) -->
+    <button id="mobile-solve-btn" class="mobile-solve-floating" aria-label="Solve Cube">Solve</button>
+
     <div class="mobile-color-dock">
         <button class="mobile-color-btn active" data-color="W" data-count="1/9" style="background:#FFFFFF" aria-label="White"></button>
         <button class="mobile-color-btn" data-color="Y" data-count="1/9" style="background:#FFD500" aria-label="Yellow"></button>
@@ -1047,7 +1146,7 @@
             <div class="face-chip" data-face-progress="L"><span>L</span><span>1/9</span></div>
             <div class="face-chip" data-face-progress="R"><span>R</span><span>1/9</span></div>
         </div>
-        <button id="mobile-solve-btn" class="drawer-solve-btn">Solve Cube</button>
+        <!-- mobile solve button moved to floating control for visibility -->
         <button id="mobile-randomize-btn" class="randomize-btn">Randomize</button>
         <button id="mobile-reset-paint-btn" class="reset-paint-btn">Reset to Start</button>
         
@@ -1116,6 +1215,7 @@
     </div>
 
     <div id="player-panel">
+        <button class="collapse-btn" id="player-collapse-btn" title="Hide playback controls">Hide controls</button>
         <div class="move-display" id="current-move-text">Analyzing</div>
         <div class="move-progress">
             <div class="move-progress-meta">

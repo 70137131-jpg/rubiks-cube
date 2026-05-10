@@ -1,3 +1,30 @@
+/* ============ PLAYER PANEL COLLAPSE ============ */
+function togglePlayerPanel() {
+    const playerPanel = document.getElementById('player-panel');
+    const collapseBtn = document.getElementById('player-collapse-btn');
+    if (!playerPanel || !collapseBtn) return;
+
+    if (playerPanel.classList.contains('collapsed')) {
+        playerPanel.classList.remove('collapsed');
+        collapseBtn.textContent = 'Hide controls';
+        collapseBtn.title = 'Hide playback controls';
+    } else {
+        playerPanel.classList.add('collapsed');
+        collapseBtn.textContent = 'Show controls';
+        collapseBtn.title = 'Show playback controls';
+    }
+}
+
+/* Auto-collapse player panel on mobile when solving starts */
+function autoCollapsePlayerOnMobile() {
+    if (window.innerWidth <= 768) {
+        const playerPanel = document.getElementById('player-panel');
+        if (!playerPanel.classList.contains('collapsed')) {
+            togglePlayerPanel();
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // UI Elements
     const canvasContainer = document.getElementById('canvas-container');
@@ -6,12 +33,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const toast = document.getElementById('toast');
     const uiLayer = document.getElementById('ui-layer');
     const playerPanel = document.getElementById('player-panel');
+    const playerCollapseBtn = document.getElementById('player-collapse-btn');
     const loadingOverlay = document.getElementById('loading-overlay');
 
     // State
     let activeColor = 'W';
     let isSolvingTriggered = false;
     let isAnimatingMove = false;
+
+    if (playerCollapseBtn) {
+        playerCollapseBtn.onclick = null;
+        playerCollapseBtn.textContent = 'Hide controls';
+        playerCollapseBtn.title = 'Hide playback controls';
+        playerCollapseBtn.addEventListener('click', togglePlayerPanel);
+    }
 
 
 
@@ -457,6 +492,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Isometric view
         cubeGroup.quaternion.setFromEuler(new THREE.Euler(Math.PI/6, -Math.PI/4, 0));
+
+        // Auto-collapse on mobile to maximize cube visibility.
+        autoCollapsePlayerOnMobile();
+        // Additionally collapse on smaller desktop/tablet viewports or short windows
+        // so the player panel doesn't cover the cube during playback.
+        if ((window.innerWidth <= 1024 || window.innerHeight <= 720) && !playerPanel.classList.contains('collapsed')) {
+            togglePlayerPanel();
+        }
         
         if (solutionMoves.length === 0) {
             document.getElementById('current-move-text').innerText = "Perfectly Solved";
