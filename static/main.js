@@ -12,12 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSolvingTriggered = false;
     let isAnimatingMove = false;
 
-    // Initialize Cube.js solver in the background
-    if (typeof Cube !== 'undefined') {
-        setTimeout(() => {
-            Cube.initSolver();
-        }, 500);
-    }
+
 
     const hexColors = {
         'W': 0xffffff, 'Y': 0xffd500, 'G': 0x009e60,
@@ -355,15 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('speed-label').innerText = animationSpeed.toFixed(1) + 'x';
     });
 
-    function formatKociembaState(state) {
-        const c2f = { 'W': 'U', 'R': 'R', 'G': 'F', 'Y': 'D', 'O': 'L', 'B': 'B' };
-        let str = "";
-        ['U', 'R', 'F', 'D', 'L', 'B'].forEach(face => {
-            state[face].forEach(c => str += c2f[c]);
-        });
-        return str;
-    }
-
     function handleSolveSuccess(solutionStr) {
         loadingOverlay.style.display = 'none';
         solutionMoves = solutionStr ? solutionStr.split(' ') : [];
@@ -397,40 +383,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function solveCubeLocal() {
         loadingOverlay.style.display = 'flex';
         
-        setTimeout(() => {
-            try {
-                let cubeStr = formatKociembaState(cubeState);
-                if (cubeStr === "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB") {
-                    handleSolveSuccess("");
-                    return;
-                }
-
-                let cube = Cube.fromString(cubeStr);
-                let solution = cube.solve();
-                if (!solution && solution !== "") {
-                    throw new Error("Cube is unsolvable. Please check your colors.");
-                }
-                
-                let solutionStr = solution.replace(/'/g, "i");
-                handleSolveSuccess(solutionStr);
-            } catch (err) {
-                loadingOverlay.style.display = 'none';
-                isSolvingTriggered = false;
-                
-                let eMsg = err.message || "Invalid cube state.";
-                let fMsg = "The cube is unsolvable. Please double-check your colors.";
-                
-                // Generic mapping for cubejs errors
-                if (eMsg.includes("facelet")) fMsg = "Incorrect colors! There must be exactly 9 tiles of each color.";
-                else if (eMsg.includes("edges exist")) fMsg = "Invalid edges! Check for duplicate or missing edge pieces.";
-                else if (eMsg.includes("flipped")) fMsg = "Wait! A single edge piece appears to be flipped impossibly.";
-                else if (eMsg.includes("corners exist")) fMsg = "Invalid corners! Check for duplicate or missing corner pieces.";
-                else if (eMsg.includes("twisted")) fMsg = "Hold on! A corner piece seems to be twisted impossibly.";
-                else if (eMsg.includes("exchanged")) fMsg = "Impossible swap! Two pieces are exchanged.";
-                
-                showToast(fMsg);
+        fetch('/solve', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(cubeState)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                handleSolveSuccess(data.solution);
+            } else {
+                throw new Error(data.message || "Invalid cube state.");
             }
-        }, 50);
+        })
+        .catch(err => {
+            loadingOverlay.style.display = 'none';
+            isSolvingTriggered = false;
+            showToast(err.message || "An error occurred while solving.");
+        });
     }
 
     function getMoveParams(move) {
