@@ -24,9 +24,9 @@
             overflow: hidden;
             background-color: var(--bg-dark);
 
-        /* Mobile floating solve button (hidden on desktop) */
-        .mobile-solve-floating {
-            display: none;
+        /* Floating solve button (visible on all viewports) */
+        .floating-solve {
+            display: flex;
             position: fixed;
             z-index: 26;
             background: var(--accent);
@@ -41,11 +41,16 @@
             cursor: pointer;
             transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.2s;
             opacity: 0.95;
+            align-items: center;
+            justify-content: center;
+            right: 16px;
+            bottom: 120px;
+            min-width: 92px;
         }
 
-        .mobile-solve-floating:active { transform: scale(0.985); }
+        .floating-solve:active { transform: scale(0.985); }
 
-        .mobile-solve-floating.ready { box-shadow: 0 10px 30px rgba(99,102,241,0.28); }
+        .floating-solve.ready { box-shadow: 0 10px 30px rgba(99,102,241,0.28); }
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
             user-select: none;
@@ -952,12 +957,8 @@
                 display: grid;
             }
 
-            /* show floating solve button on mobile */
-            .mobile-solve-floating {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                right: 16px;
+            /* nudge floating solve button up on mobile so it doesn't overlap other controls */
+            .floating-solve {
                 bottom: 150px;
                 min-width: 84px;
             }
@@ -1116,8 +1117,8 @@
         <span id="mobile-toggle-label">More</span>
     </button>
 
-    <!-- Mobile floating Solve button (visible on mobile, removed from drawer) -->
-    <button id="mobile-solve-btn" class="mobile-solve-floating" aria-label="Solve Cube">Solve</button>
+    <!-- Floating Solve button (visible on front page for desktop & mobile) -->
+    <button id="mobile-solve-btn" class="floating-solve" aria-label="Solve Cube">Solve</button>
 
     <div class="mobile-color-dock">
         <button class="mobile-color-btn active" data-color="W" data-count="1/9" style="background:#FFFFFF" aria-label="White"></button>
