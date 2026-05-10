@@ -297,34 +297,7 @@
             transform: none;
         }
 
-        /* Cool Patterns UI */
-        .patterns-section {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255,255,255,0.08);
-        }
-        .patterns-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .pattern-btn {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text-main);
-            padding: 12px;
-            border-radius: 10px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-        }
-        .pattern-btn:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: var(--accent);
-            padding-left: 16px;
-        }
+
 
         /* Elegant Player UI */
         #player-panel {
@@ -860,15 +833,6 @@
         <button id="mobile-randomize-btn" class="randomize-btn">🎲 Randomize</button>
         <button id="mobile-reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
         
-        <div class="patterns-section" style="margin-top: 16px; padding-top: 16px;">
-            <div class="section-title" style="margin-bottom: 12px;">Cool Patterns</div>
-            <div class="patterns-grid">
-                <button class="pattern-btn" data-pattern="M2 E2 S2">Checkerboard</button>
-                <button class="pattern-btn" data-pattern="U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2">Superflip</button>
-                <button class="pattern-btn" data-pattern="F L F U' R U F2 L2 U' L' B D' B' L2 U">Cube in a Cube</button>
-            </div>
-        </div>
-
         <div class="drawer-handle"></div>
     </div>
 
@@ -904,14 +868,7 @@
             <button id="randomize-btn" class="randomize-btn">🎲 Randomize</button>
             <button id="reset-paint-btn" class="reset-paint-btn">↺ Reset to Start</button>
 
-            <div class="patterns-section">
-                <div class="section-title">Cool Patterns</div>
-                <div class="patterns-grid">
-                    <button class="pattern-btn" data-pattern="M2 E2 S2">Checkerboard</button>
-                    <button class="pattern-btn" data-pattern="U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2">Superflip</button>
-                    <button class="pattern-btn" data-pattern="F L F U' R U F2 L2 U' L' B D' B' L2 U">Cube in a Cube</button>
-                </div>
-            </div>
+
         </div>
     </div>
 
