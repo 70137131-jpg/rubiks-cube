@@ -3,10 +3,7 @@
 A sleek, interactive web-based 3D Rubik's Cube solver. This application allows you to virtually interact with a Rubik's Cube, scramble it, and watch as it automatically finds and animates the optimal solution to solve it using the Kociemba algorithm.
 
 
-##Link
-rubiks-cube-omega.vercel.app
-
-
+[https://rubiks-cube-omega.vercel.app/]
 
 ## Features
 
